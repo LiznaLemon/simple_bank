@@ -86,3 +86,51 @@ func (server *Server) ListAccounts(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, accounts)
 }
+
+type deleteAccountRequest struct {
+	ID int64 `uri:"id" binding:"required" min:"1"`
+}
+
+func (server *Server) DeleteAccountByID(ctx *gin.Context) {
+	request := deleteAccountRequest{}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := server.store.DeleteAccount(ctx, request.ID); err != nil {
+		ctx.JSON(http.StatusNotImplemented, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "successfully deleted account")
+
+}
+
+type updateAccountRequest struct {
+	ID      int64 `json:"id" binding:"required" min:"1" `
+	Balance int64 `json:"balance" binding:"required"`
+}
+
+func (server *Server) UpdateAccountByID(ctx *gin.Context) {
+
+	req := updateAccountRequest{}
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	parms := db.UpdateAccountParams{
+		ID:      req.ID,
+		Balance: req.Balance,
+	}
+
+	account, err := server.store.UpdateAccount(ctx, parms)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	ctx.JSON(http.StatusOK, account)
+
+}
